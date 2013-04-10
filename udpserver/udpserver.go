@@ -116,20 +116,20 @@ func parseData(data string) interface{} {
 		busGPSData.Name = busName
 
 		latitudeStr := fields[4]
-		latitude, err := strconv.ParseFloat(latitudeStr, 32)
+		latitude, err := strconv.ParseFloat(latitudeStr, 64)
 		if err != nil {
 			log.Printf("invalid latitude: %s", fields[4])
 			return nil
 		}
-		busGPSData.Latitude = float32(latitude)
+		busGPSData.Latitude = latitude
 
 		longitudeStr := fields[6]
-		longitude, err := strconv.ParseFloat(longitudeStr, 32)
+		longitude, err := strconv.ParseFloat(longitudeStr, 64)
 		if err != nil {
 			log.Printf("invalid longitude: %s", fields[6])
 			return nil
 		}
-		busGPSData.Longitude = float32(longitude)
+		busGPSData.Longitude = longitude
 
 		return busGPSData
 	}
