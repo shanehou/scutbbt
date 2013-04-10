@@ -32,6 +32,7 @@ func init() {
 	flag.StringVar(&historyFile, "history_file", "./history.txt", "history file path")
 }
 
+// udp 服务器
 func UdpServer(addr string, redisConn redis.Conn) {
 	_addr, err := net.ResolveUDPAddr("udp", addr)
 	if err != nil {
@@ -52,6 +53,7 @@ func UdpServer(addr string, redisConn redis.Conn) {
 		}
 		data := string(buf[:n])
 
+		// 记录收到的信息到日志
 		f, err := os.OpenFile("history.txt", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
 		if err != nil {
 			log.Println(err)
@@ -64,31 +66,32 @@ func UdpServer(addr string, redisConn redis.Conn) {
 	}
 }
 
+// 处理数据
 func handleData(data string, redisConn redis.Conn) {
 	if rawData := parseData(data); rawData != nil {
-		if busGPSData, ok := rawData.(*BusGPSData); ok {
-			b, err := json.Marshal(busGPSData)
-			if err != nil {
-				log.Println(err)
-				return
-			}
-			_, err = redisConn.Do("PUBLISH", "BusGPSData", string(b))
-			if err != nil {
-				log.Println(err)
-				return
-			}
+		// 序列化数据
+		b, err := json.Marshal(rawData)
+		if err != nil {
+			log.Println(err)
+			return
 		}
-		if busTipInfo, ok := rawData.(*BusTipInfo); ok {
-			b, err := json.Marshal(busTipInfo)
-			if err != nil {
-				log.Println(err)
-				return
-			}
-			_, err = redisConn.Do("PUBLISH", "BusTipInfo", string(b))
-			if err != nil {
-				log.Println(err)
-				return
-			}
+
+		// 判断要发送到的 channel
+		var channel string
+		switch rawData.(type) {
+		case *BusGPSData:
+			channel = "BusGPSData"
+		case *BusTipInfo:
+			channel = "BusTipInfo"
+		default:
+			panic("invalid rawData type")
+		}
+
+		// 发布到 Redis
+		_, err = redisConn.Do("PUBLISH", channel, string(b))
+		if err != nil {
+			log.Println(err)
+			return
 		}
 	}
 }
@@ -106,6 +109,7 @@ func parseData(data string) interface{} {
 
 	busName := strings.TrimSpace(fields[0])
 
+	// 收到 GPS 数据
 	if fields[1] == "$GPRMC" {
 		if len(fields) < 11 {
 			log.Printf("invalid gps data: %s", data)
@@ -134,6 +138,7 @@ func parseData(data string) interface{} {
 		return busGPSData
 	}
 
+	// 收到 Tip 信息
 	if strings.HasPrefix(fields[1], TIP_PREFIX) {
 		if len(fields) != 2 {
 			log.Printf("invalid tip: %s", data)
