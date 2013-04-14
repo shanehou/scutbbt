@@ -54,7 +54,7 @@ func UdpServer(addr string, redisConn redis.Conn) {
 		data := string(buf[:n])
 
 		// 记录收到的信息到日志
-		f, err := os.OpenFile("history.txt", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
+		f, err := os.OpenFile(historyFile, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
 		if err != nil {
 			log.Println(err)
 		} else {
@@ -80,9 +80,9 @@ func handleData(data string, redisConn redis.Conn) {
 		var channel string
 		switch rawData.(type) {
 		case *BusGPSData:
-			channel = "BusGPSData"
+			channel = BUS_GPS_DATA
 		case *BusTipInfo:
-			channel = "BusTipInfo"
+			channel = BUS_TIP_INFO
 		default:
 			panic("invalid rawData type")
 		}

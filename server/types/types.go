@@ -1,8 +1,13 @@
 package types
 
+const (
+    BUS_TIP_INFO = "BusTipInfo"
+    BUS_GPS_DATA = "BusGPSData"
+)
+
 type BusTipInfo struct {
 	Name string
-	Type string
+	Tip string
 }
 
 type BusGPSData struct {
